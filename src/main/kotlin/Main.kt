@@ -9,6 +9,9 @@ fun toJSON(collection: Collection<Int>): String {
   return builder.toString()
 }
 
+fun joinOptions(options: Collection<String>) = options.joinToString(",", "[", "]")
+
+
 fun main(args: Array<String>) {
-  println("Hello world")
+  println(joinOptions(arrayListOf("opt1","opt2")))
 }
