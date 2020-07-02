@@ -1,17 +1,6 @@
-fun toJSON(collection: Collection<Int>): String {
-  val builder = StringBuilder("[")
-  val iterator: Iterator<Int> =collection.iterator()
-  while (iterator.hasNext()){
-    builder.append(iterator.next())
-    if (iterator.hasNext()) builder.append(", ")
-  }
-  builder.append("]")
-  return builder.toString()
+fun main(args: Array<String>){
+	//val grammar = Grammar(NonTerminal("a") to Choise(Terminal("b"), Terminal("c")))
+	//println(grammar)
+	println("a")
 }
 
-fun joinOptions(options: Collection<String>) = options.joinToString(",", "[", "]")
-
-
-fun main(args: Array<String>) {
-  println(joinOptions(arrayListOf("opt1","opt2")))
-}
