@@ -1,3 +1,5 @@
+package grammar
+
 class TextGenerator(val grammar: Grammar, val repeatBound: Int) {
   private val random = java.util.Random()
 

@@ -1,3 +1,5 @@
+package grammar
+
 data class SimplifiedRule(val symbols: List<Symbol>) {
   override fun toString(): String = symbols.fold("", { acc, e -> acc + " " + e })
   constructor(vararg syms: Symbol) : this(syms.toList())
