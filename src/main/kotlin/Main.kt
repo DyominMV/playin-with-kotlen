@@ -1,3 +1,5 @@
+import grammar.*
+
 fun main(args: Array<String>) {
   val grammar = Grammar(
     NonTerminal("a") to Choise(NonTerminal("a"), Terminal("b"), Repeat(Terminal("B"))),
