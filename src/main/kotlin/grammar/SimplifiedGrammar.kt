@@ -10,5 +10,5 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
   override fun toString(): String = rules.entries.fold("", { acc, entry -> "" + acc + entry.key + " = " + entry.value.fold("", { a, b -> a + "\n\t" + b }) })
   public fun toGrammar(): Grammar = Grammar(rules.mapValues { entry -> Choise(entry.value.map { Sequence(it.symbols) }) })
 
-  public static fun fromGrammar(grammar: Grammar): SimplifiedGrammar = TODO()
+  // public static fun fromGrammar(grammar: Grammar): SimplifiedGrammar = TODO()
 }
