@@ -1,10 +1,17 @@
 import grammar.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) {
-  val grammar = Grammar(
-    NonTerminal("a") to Choise(NonTerminal("a"), Terminal("b"), Repeat(Terminal("B"))),
-    NonTerminal("b") to Choise(NonTerminal("b"), Terminal("b"), Repeat(Terminal("B"))),
-    NonTerminal("c") to Choise(NonTerminal("c"), Terminal("b"), Repeat(Terminal("B")))
-  )
-  println(TextGenerator(grammar, 4).generateText(Sequence(NonTerminal("a"), NonTerminal("b"), NonTerminal("c"))))
+class Application {
+  companion object {
+    @JvmStatic public fun main(args: Array<String>) {
+      println("Start")
+      // Start a coroutine
+      GlobalScope.launch {
+          delay(1000)
+          println("Hello")
+      }
+      Thread.sleep(2000) // wait for 2 seconds
+      println("Stop")
+    }
+  }
 }

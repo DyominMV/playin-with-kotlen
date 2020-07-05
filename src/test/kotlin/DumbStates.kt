@@ -14,4 +14,5 @@ enum class DumbState{
     DumbState.STATE4 -> arrayListOf(DumbState.STATE5, DumbState.STATE6)
     DumbState.STATE5 -> arrayListOf(DumbState.STATE5)
     DumbState.STATE6 -> arrayListOf(DumbState.STATE6)
+  }
 }
