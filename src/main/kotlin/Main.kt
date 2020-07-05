@@ -1,7 +1,7 @@
 import grammar.*
 import kotlinx.coroutines.*
 
-class Application {
+class Main {
   companion object {
     @JvmStatic public fun main(args: Array<String>) {
       println("Start")

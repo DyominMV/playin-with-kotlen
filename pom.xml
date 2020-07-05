@@ -11,7 +11,7 @@
 
   <properties>
     <kotlin.version>1.3.72</kotlin.version>
-    <main.class>Application</main.class>
+    <main.class>Main</main.class>
   </properties>
 
   <repositories>
