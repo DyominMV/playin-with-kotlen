@@ -1,4 +1,4 @@
-class DumbMachiene<T : kotlin.Enum<T>> (
+class DumbMachiene<T> (
   val transition: (T) -> List<T>,
   val isFinite: (T) -> Boolean
 ){

@@ -2,7 +2,7 @@ import kotlinx.coroutines.*
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
-class AsyncMachiene<T : kotlin.Enum<T>> (
+class AsyncMachiene<T> (
   val transition: (T) -> List<T>,
   val isFinite: (T) -> Boolean
 ) {
