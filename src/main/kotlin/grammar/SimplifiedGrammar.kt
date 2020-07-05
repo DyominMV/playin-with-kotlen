@@ -1,7 +1,7 @@
 package grammar
 
 data class SimplifiedRule(val symbols: List<Symbol>) {
-  override fun toString(): String = 
+  override fun toString(): String =
     if (symbols.size> 0) symbols.fold("", { acc, e -> acc + " " + e }) else "_"
   constructor(vararg syms: Symbol) : this(syms.toList())
   fun isEpsilon(): Boolean = symbols.size == 0
@@ -28,13 +28,15 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
     private fun processRule(nonTerminal: NonTerminal, rule: Expression, targetRules: RulesMap) {
       when (rule) {
         is Symbol -> addRule(SimplifiedRule(rule), nonTerminal, targetRules)
-        is Choise ->{
-          var i =0 
-          for (variant in rule.variants){
-            i+=1
-            val newNonTerminal = NonTerminal(nonTerminal.name+"_"+ i)
-            processRule(newNonTerminal, variant, targetRules)
-            addRule(SimplifiedRule(newNonTerminal), nonTerminal, targetRules)
+        is Choise -> {
+          var i = 0
+          for (variant in rule.variants) {
+            i += 1
+            if (variant is Repeat || variant is Maybe) {
+                val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
+                processRule(newNonTerminal, variant, targetRules)
+                addRule(SimplifiedRule(newNonTerminal), nonTerminal, targetRules)
+            } else processRule(nonTerminal, variant, targetRules)
           }
         }
         is Repeat -> {
