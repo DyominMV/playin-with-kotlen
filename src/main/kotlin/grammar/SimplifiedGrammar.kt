@@ -4,6 +4,7 @@ data class SimplifiedRule(val symbols: List<Symbol>) {
   override fun toString(): String = 
     if (symbols.size> 0) symbols.fold("", { acc, e -> acc + " " + e }) else "_"
   constructor(vararg syms: Symbol) : this(syms.toList())
+  fun isEpsilon(): Boolean = symbols.size == 0
 }
 
 typealias RulesMap = HashMap<NonTerminal, ArrayList<SimplifiedRule>>
