@@ -1,7 +1,17 @@
+package automata
+
 import kotlinx.coroutines.*
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Очень простецкий недетерминированный конечный автомат С КОРУТИНКАМИ
+ * при этом конечное состояние возвращается только одно.
+ * <tt>ТАК НАДО</tt> 
+ * По сути то же что @see DumbMachiene , но при этом немного сложнее (параллельность, ууу)
+ * Бутылочное горлышко на каждом шаге, но зато если граф функции перехода будет 
+ * каких-то кошмарных размеров, мб получим выигрыш в скорости
+ */
 class AsyncMachiene<T> (
   val transition: (T) -> List<T>,
   val isFinite: (T) -> Boolean
@@ -17,6 +27,9 @@ class AsyncMachiene<T> (
   
   private fun newConcurrentSet(): MutableSet<T> = Collections.newSetFromMap(ConcurrentHashMap<T,Boolean>())
 
+  /**
+   * Запустить автомат и выдать первое достигнутое конечное состояние
+   */
   public fun runMachiene(startState: T): T {
     var nextStates = newConcurrentSet()
     var currentStates = newConcurrentSet()

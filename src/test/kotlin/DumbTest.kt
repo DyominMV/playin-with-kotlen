@@ -1,6 +1,7 @@
 import org.junit.Test
 import org.junit.Assert.assertTrue
 import kotlinx.coroutines.*
+import automata.*
 
 class DumbTest {
   @Test
