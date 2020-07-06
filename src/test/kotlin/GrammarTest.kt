@@ -17,7 +17,9 @@ class GrammarTest{
       c to Sequence(C, Maybe(a))
     )    
     println(grammar)
-    val simplifiedGrammar = SimplifiedGrammar.fromGrammar(grammar)
-    println(simplifiedGrammar)
+    println( kotlin.system.measureTimeMillis {
+      val simplifiedGrammar = SimplifiedGrammar.fromGrammar(grammar)
+      println(simplifiedGrammar)
+    })
   }
 }
