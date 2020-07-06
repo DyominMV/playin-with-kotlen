@@ -5,7 +5,7 @@ import kotlinx.coroutines.*
 
 /**
  * Здесь описываются грамматики в упрощённой форме, то есть в обычной БНФ
- * @see Grammar 
+ * @see Grammar
  */
 
  /**
@@ -13,7 +13,7 @@ import kotlinx.coroutines.*
   */
 data class SimplifiedRule(val symbols: List<Symbol>) {
   override fun toString(): String =
-    if (symbols.size> 0) symbols.fold("", { acc, e -> acc + " " + e }) else "_"
+    if (symbols.size> 0) symbols.fold("", { acc, e -> acc + e + " " }) else "_"
   constructor(vararg syms: Symbol) : this(syms.toList())
   /*пустое правило обчно называется эпсилон-правилом */
   fun isEpsilon(): Boolean = symbols.size == 0
@@ -32,7 +32,7 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
   override fun toString(): String = rules.entries.fold("", { acc, entry -> "" + acc + "\n" + entry.key + " = " + entry.value.fold("", { a, b -> a + "\n\t" + b }) })
   public fun toGrammar(): Grammar = Grammar(rules.mapValues { entry -> Choise(entry.value.map { Sequence(it.symbols) }) })
   /* узнаём есть ли эпсилон-правило ля данного символа */
-  public fun isEpsilon(nonTerminal: NonTerminal): Boolean = rules.get(nonTerminal)?.any{it.isEpsilon()} ?: false
+  public fun isEpsilon(nonTerminal: NonTerminal): Boolean = rules.get(nonTerminal)?.any { it.isEpsilon() } ?: false
 
   companion object {
     /* получить сптсок правил для указанного нетерминала */
@@ -54,11 +54,11 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
         is Choise -> {
           var i = 0
           for (variant in rule.variants) {
-            i += 1
             if (variant is Repeat || variant is Maybe) {
-                val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
-                processRule(newNonTerminal, variant, targetRules)
-                addRule(SimplifiedRule(newNonTerminal), nonTerminal, targetRules)
+              val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
+              i += 1
+              processRule(newNonTerminal, variant, targetRules)
+              addRule(SimplifiedRule(newNonTerminal), nonTerminal, targetRules)
             } else processRule(nonTerminal, variant, targetRules)
           }
         }
@@ -71,20 +71,19 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
           addRule(SimplifiedRule(), nonTerminal, targetRules)
         }
         is Sequence -> {
-          val newRuleList: MutableList<Symbol> = ArrayList<Symbol>()
+          val newSymbolsList: MutableList<Symbol> = ArrayList<Symbol>()
           var i = 0
           for (expr in rule.parts) {
-            i += 1
-            when (expr) {
-              is Symbol -> newRuleList.add(expr)
-              else -> {
-                val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
-                processRule(newNonTerminal, expr, targetRules)
-                newRuleList.add(newNonTerminal)
-              }
+            if (expr is Symbol)
+            newSymbolsList.add(expr)
+            else {
+              val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
+              i += 1
+              processRule(newNonTerminal, expr, targetRules)
+              newSymbolsList.add(newNonTerminal)
             }
           }
-          addRule(SimplifiedRule(newRuleList), nonTerminal, targetRules)
+          addRule(SimplifiedRule(newSymbolsList), nonTerminal, targetRules)
         }
       }
     }
@@ -94,10 +93,15 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
      */
     public fun fromGrammar(grammar: Grammar): SimplifiedGrammar {
       val targetRules = ConcurrentHashMap<NonTerminal, ArrayList<SimplifiedRule>>()
+      val jobList = ArrayList<Job>()
       for ((nonTerminal, rule) in grammar.rules) {
-        GlobalScope.launch{
+        jobList.add(GlobalScope.launch {
           processRule(nonTerminal, rule, targetRules)
-        }
+        })
+      }
+      runBlocking{
+        for (job in jobList)
+          job.join()
       }
       return SimplifiedGrammar(targetRules)
     }
