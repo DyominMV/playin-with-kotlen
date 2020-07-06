@@ -1,5 +1,8 @@
 package grammar
 
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.*
+
 data class SimplifiedRule(val symbols: List<Symbol>) {
   override fun toString(): String =
     if (symbols.size> 0) symbols.fold("", { acc, e -> acc + " " + e }) else "_"
@@ -7,7 +10,7 @@ data class SimplifiedRule(val symbols: List<Symbol>) {
   fun isEpsilon(): Boolean = symbols.size == 0
 }
 
-typealias RulesMap = HashMap<NonTerminal, ArrayList<SimplifiedRule>>
+typealias RulesMap = MutableMap<NonTerminal, ArrayList<SimplifiedRule>>
 
 data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) {
   constructor(vararg theRules: Pair<NonTerminal, List<SimplifiedRule>>) : this(theRules.associateBy({ it.first }, { it.second }))
@@ -67,9 +70,11 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
     }
 
     public fun fromGrammar(grammar: Grammar): SimplifiedGrammar {
-      val targetRules = HashMap<NonTerminal, ArrayList<SimplifiedRule>>()
+      val targetRules = ConcurrentHashMap<NonTerminal, ArrayList<SimplifiedRule>>()
       for ((nonTerminal, rule) in grammar.rules) {
-        processRule(nonTerminal, rule, targetRules)
+        GlobalScope.launch{
+          processRule(nonTerminal, rule, targetRules)
+        }
       }
       return SimplifiedGrammar(targetRules)
     }
