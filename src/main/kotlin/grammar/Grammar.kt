@@ -1,10 +1,6 @@
 package grammar
 
 /**
- * Тут описана грамматика в расширенной форме Бэкуса - Наура
- */
-
-/**
  * позволяет комбинировать различные выражения
  */
 sealed class Expression
@@ -36,8 +32,14 @@ data class Terminal(val value: String) : Symbol() {
 /**
  * Специальные символы - это такие терминалы, по которым нельзя сгенерировать текст, 
  * но которые позволяют текст разбирать
+ * 
+ * ну ладно, на самом деле они нетерминалы, потому что у них есть имя и они, вообще 
+ * говоря, задают МНОЖЕСТВО (читай, Choise) из доступных символов. 
+ * С другой стороны они скорее терминалы, ведь по ним сразу можно понять подходят ли 
+ * символы из потока под данный символ
+ * Именно поэтому они наследуют Symbol, а больше ничего не наследуют. Так надо
  */
-class SpecialSymbol(val name: String, val filter: (Char) -> Boolean) : Symbol() {
+data class SpecialSymbol(val name: String, val filter: (Char) -> Boolean) : Symbol() {
   override fun toString(): String = name
   operator fun not(): SpecialSymbol = SpecialSymbol(name, { !filter(it) })
   operator fun plus(other: SpecialSymbol): SpecialSymbol =
