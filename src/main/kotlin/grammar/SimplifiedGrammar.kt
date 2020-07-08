@@ -31,11 +31,11 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
   constructor(vararg theRules: Pair<NonTerminal, List<SimplifiedRule>>) : this(theRules.associateBy({ it.first }, { it.second }))
   override fun toString(): String = rules.entries.fold("", { acc, entry -> "" + acc + "\n" + entry.key + " = " + entry.value.fold("", { a, b -> a + "\n\t" + b }) })
   public fun toGrammar(): Grammar = Grammar(rules.mapValues { entry -> Choise(entry.value.map { Sequence(it.symbols) }) })
-  /* узнаём есть ли эпсилон-правило ля данного символа */
+  /* узнаём есть ли эпсилон-правило ля данного нетерминала */
   public fun isEpsilon(nonTerminal: NonTerminal): Boolean = rules.get(nonTerminal)?.any { it.isEpsilon() } ?: false
 
   companion object {
-    /* получить сптсок правил для указанного нетерминала */
+    /* получить список правил для указанного нетерминала */
     private fun getOrCreateList(nonTerminal: NonTerminal, targetRules: RulesMap): ArrayList<SimplifiedRule> =
         targetRules.get(nonTerminal) ?: {
         val newList = ArrayList<SimplifiedRule>()
