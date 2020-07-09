@@ -26,8 +26,13 @@ data class NonTerminal(val name: String) : Symbol() {
  * Терминалы не заменяются правилами
  */
 data class Terminal(val value: String) : Symbol() {
+  init {
+    if (0 == value.length) throw WrongTerminalException()
+  }
   override fun toString(): String = "\'" + value.replace("\'", "\\\'") + "\'"
 }
+
+typealias CharFilter = (Char?) -> Boolean
 
 /**
  * Специальные символы - это такие терминалы, по которым нельзя сгенерировать текст, 
@@ -39,7 +44,7 @@ data class Terminal(val value: String) : Symbol() {
  * символы из потока под данный символ
  * Именно поэтому они наследуют Symbol, а больше ничего не наследуют. Так надо
  */
-data class SpecialSymbol(val name: String, val filter: (Char) -> Boolean) : Symbol() {
+data class SpecialSymbol(val name: String, val filter: CharFilter) : Symbol() {
   override fun toString(): String = name
   operator fun not(): SpecialSymbol = SpecialSymbol(name, { !filter(it) })
   operator fun plus(other: SpecialSymbol): SpecialSymbol =
