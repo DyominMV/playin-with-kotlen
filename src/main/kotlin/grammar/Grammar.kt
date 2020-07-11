@@ -10,7 +10,7 @@ sealed class Expression
  * терминалом (@see Terminal) и нетерминалом (@see NonTerminal).
  * специальный символ (@see SpecialSymbol)- аналог терминала, полезен во время разбора текста
  */
-sealed class Symbol : Expression()
+sealed class Symbol : Expression() 
 
 /**
  * Нетерминалы по сути описывают названия правил
@@ -47,9 +47,12 @@ typealias CharFilter = (Char?) -> Boolean
 data class SpecialSymbol(val name: String, val filter: CharFilter) : Symbol() {
   override fun toString(): String = name
   operator fun not(): SpecialSymbol = SpecialSymbol(name, { !filter(it) })
-  operator fun plus(other: SpecialSymbol): SpecialSymbol =
-    SpecialSymbol(name + other.name, { filter(it) || other.filter(it) })
 }
+
+/**
+ * Синглотоновый конец файла. Его роль очевидна
+ */
+object EndOfFile: Symbol()
 
 /**
  * Последовательность - правило вида:
