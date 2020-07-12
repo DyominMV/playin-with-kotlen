@@ -38,6 +38,4 @@ class CompoundLeaf(
   override public fun getValue() = value
 }
 
-class Ast(val root: Node){
-
-}
+class Ast(val root: Node)
