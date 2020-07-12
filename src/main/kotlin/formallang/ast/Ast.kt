@@ -1,4 +1,4 @@
-package ast
+package formallang.ast
 
 import grammar.*
 

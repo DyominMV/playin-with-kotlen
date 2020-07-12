@@ -1,4 +1,4 @@
-package grammar
+package formallang.grammar
 
 /**
  * позволяет комбинировать различные выражения

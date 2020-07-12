@@ -1,4 +1,4 @@
-package grammar
+package formallang.grammar
 
 /**
  * Нужен для фильтрации возможных правил

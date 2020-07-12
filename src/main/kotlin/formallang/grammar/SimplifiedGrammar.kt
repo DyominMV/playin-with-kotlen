@@ -1,12 +1,7 @@
-package grammar
+package formallang.grammar
 
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
-
-/**
- * Здесь описываются грамматики в упрощённой форме, то есть в обычной БНФ
- * @see Grammar
- */
 
  /**
   * упрощённое правило состояит только из символов (то есть не включает выражения)

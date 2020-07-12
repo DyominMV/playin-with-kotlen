@@ -16,9 +16,9 @@ class RegularMachiene<T : State>(
     }).filter({it.getType() != State.StateType.FAIL})
     if (currentStates.size == 0) 
       return State.StateType.FAIL
-    var possibleStates = currentStates.filter {it.getType() == State.StateType.SUCCESS}
-    if (possibleStates.size > 0){
-      currentStates = possibleStates
+    var possibleState = currentStates.find {it.getType() == State.StateType.SUCCESS}
+    if (possibleState != null){
+      currentStates = listOf(possibleState)
       return State.StateType.SUCCESS
     }
     currentStates.filter {it.getType() == State.StateType.UNFINISHED}
