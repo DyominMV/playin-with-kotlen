@@ -1,6 +1,6 @@
 package formallang.ast
 
-import grammar.*
+import formallang.grammar.*
 
 sealed class Node
 
