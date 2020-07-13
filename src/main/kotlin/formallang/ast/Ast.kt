@@ -7,7 +7,7 @@ sealed class Node
 class Fork(
   val nonTerminal: NonTerminal,
   val rule: SimplifiedRule,
-  val children: MutableList<Node>
+  val children: List<Node>
 ) : Node()
 
 sealed class Leaf : Node(){
