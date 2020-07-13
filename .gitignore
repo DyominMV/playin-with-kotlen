@@ -10,5 +10,4 @@ build
 target
 ktDebugJsonLog.txt
 *.jar
-
 src/main/kotlin/Main.kt
