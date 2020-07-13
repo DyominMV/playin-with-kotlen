@@ -1,7 +1,7 @@
 package automata
 
 interface State{
-  enum class StateType{
+  public enum class StateType{
     UNFINISHED, FAIL, SUCCESS
   }
   public fun getType(): StateType
