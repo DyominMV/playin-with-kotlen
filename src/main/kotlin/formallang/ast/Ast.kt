@@ -8,7 +8,14 @@ class Fork(
   val nonTerminal: NonTerminal,
   val rule: SimplifiedRule,
   val children: List<Node>
-) : Node()
+) : Node(){
+  public fun getString():String = children.fold("", {
+    acc, nextNode -> acc + when (nextNode){
+        is Leaf -> nextNode.getValue()
+        is Fork -> nextNode.getString()
+      }
+  })
+}
 
 sealed class Leaf : Node(){
   public abstract fun getValue(): String
