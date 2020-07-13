@@ -50,9 +50,12 @@ data class SpecialSymbol(val name: String, val filter: CharFilter) : Symbol() {
 }
 
 /**
- * Синглотоновый конец файла. Его роль очевидна
+ * Конец файла. Его роль очевидна
  */
-object EndOfFile: Symbol()
+class EndOfFile: Symbol(){
+  override fun equals(other: Any?):Boolean = if (other is EndOfFile) true else false
+  override fun hashCode(): Int = 1
+}
 
 /**
  * Последовательность - правило вида:
