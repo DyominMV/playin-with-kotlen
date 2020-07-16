@@ -6,5 +6,5 @@ class WrongTerminalException() :
 class NoRuleFoundException(nonTerminal : NonTerminal):
   Exception("No rule found for non-terminal called $nonTerminal")
 
-class LeftRecursionException(nonTerminal : NonTerminal, rule: SimplifiedRule):
-  Exception("Left recursion found when checking rule:\n\t$nonTerminal = $rule")
+class LeftRecursionException(nonTerminal : NonTerminal):
+  Exception("Left recursion found when checking nonTerminal: $nonTerminal")
