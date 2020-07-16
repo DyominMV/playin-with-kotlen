@@ -26,7 +26,7 @@ class FirstCharBlackList(
           (other.charList.filter(filter)), 
         {(filter(it) && other.filter(it))}
       )
-      is FirstCharWhiteList -> this + FirstCharBlackList(other.charList, other.filter) 
+      is FirstCharWhiteList -> sum(other, this) 
     }
 }
 
@@ -40,9 +40,16 @@ class FirstCharWhiteList(
   override public fun suitable(char: Char?): Boolean = filter(char) || charList.contains(char)
   override operator fun plus(other: FirstCharacter): FirstCharacter 
     = when (other){
-      is FirstCharBlackList -> other + FirstCharBlackList(charList, filter)
+      is FirstCharBlackList -> sum(this, other)
       is FirstCharWhiteList -> FirstCharWhiteList(charList union other.charList, {filter(it) || other.filter(it)})
     }
+}
+
+private fun sum(white: FirstCharWhiteList, black: FirstCharBlackList): FirstCharacter{
+  return FirstCharBlackList(
+    (black.charList - white.charList).filter({ !white.filter(it) }).toSet(),
+    { black.filter(it) && !(white.filter(it)) && !(white.charList.contains(it)) }
+  )
 }
 
 /**
