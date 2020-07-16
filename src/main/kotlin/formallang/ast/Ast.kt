@@ -38,6 +38,10 @@ object EndOfFileLeaf : Leaf(){
   override public fun getStringValue() = ""
 }
 
+object EmptyLeaf : Leaf(){
+  override public fun getStringValue() = ""
+}
+
 class CompoundLeaf(
   val nonTerminal: NonTerminal, 
   val value: String
