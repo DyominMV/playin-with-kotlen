@@ -44,8 +44,15 @@ class RealBranch<BranchData, LeafData>(
   parent: INode<BranchData, LeafData>?
   var data: BranchData
 ) : Node<BranchData, LeafData>(parent){
+
+  companion object {
+    private val MAP_CAPACITY = 5
+  }
+
   private val children = Collections.synchronizedMap(
-   WeakHashMap<ForkableTree<BranchData, LeafData>, MutableList<Node<BranchData, LeafData>>>()
+   WeakHashMap<ForkableTree<BranchData, LeafData>, MutableList<Node<BranchData, LeafData>>>(
+     RealBranch.MAP_CAPACITY
+   )
   )
   fun getData(): BranchData = data
   fun setData(data: BranchData) {this.data = data}
