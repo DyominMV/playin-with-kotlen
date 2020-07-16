@@ -50,42 +50,42 @@ class RealBranch<BranchData, LeafData>(
   fun getData(): BranchData = data
   fun setData(data: BranchData) {this.data = data}
 
-  fun getChildren(owner: ForkableTree<BranchData, LeafData>): List<INode<BranchData, LeafData>> =
-    ((owner.inherited union hashSetOf(owner)) intersect (children.keys)).map {children.get(it)!!}
-      .fold(ArrayList<INode<BranchData, LeafData>>()) { acc, next -> 
+  fun getChildren(caller: ForkableTree<BranchData, LeafData>): List<INode<BranchData, LeafData>> =
+    ((caller.inherited union hashSetOf(caller)) intersect (children.keys)).map {children.get(it)!!}
+      .fold(ArrayList<INode<BranchData, LeafData>>(), { acc, next -> 
           acc.addAll(next) 
           acc 
-        }
+        }).map { if (it is RealBranch) Branch(it, caller) else it }
   
-  private fun getOrCreateChildrenList(owner: ForkableTree<BranchData, LeafData>) : 
+  private fun getOrCreateChildrenList(caller: ForkableTree<BranchData, LeafData>) : 
       MutableList<INode<BranchData, LeafData>> = (
-          children.get(owner) ?: {
+          children.get(caller) ?: {
           val list = arrayListOf<Node<BranchData, LeafData>>()
-          children.put(owner, list)
+          children.put(caller, list)
           list
         }()) as MutableList<INode<BranchData, LeafData>>
 
-  fun addLeafChild(owner: ForkableTree<BranchData, LeafData>, data: LeafData){
-    getOrCreateChildrenList(owner).add(Leaf(Branch(this,owner), data))
+  fun addLeafChild(caller: ForkableTree<BranchData, LeafData>, data: LeafData){
+    getOrCreateChildrenList(caller).add(Leaf(this, data))
   }
 
-  fun addBranchChild(owner: ForkableTree<BranchData, LeafData>, data: BranchData){
-    getOrCreateChildrenList(owner).add(
-      Branch(RealBranch(Branch(this,owner), data), owner)
+  fun addBranchChild(caller: ForkableTree<BranchData, LeafData>, data: BranchData){
+    getOrCreateChildrenList(caller).add(
+      RealBranch(this, data)
     )
   }
 }
 
 class Branch<BranchData, LeafData> (
   val realBranch: RealBranch<BranchData, LeafData>
-  val owner: ForkableTree<BranchData, LeafData>
+  val caller: ForkableTree<BranchData, LeafData>
 ) : IBranch<BranchData, LeafData> {
   override fun getChildren(): List<INode<BranchData, LeafData>> =
-    realBranch.getChildren(owner)
+    realBranch.getChildren(caller)
   override fun addBranchChild(branchData: BranchData) = 
-    realBranch.addBranchChild(owner, branchData)
+    realBranch.addBranchChild(caller, branchData)
   override fun addLeafChild(leafData: LeafData) =
-    realBranch.addLeafChild(owner, leafData)
+    realBranch.addLeafChild(caller, leafData)
   override fun getData(): BranchData = 
     realBranch.getData()
   override fun setData(data: BranchData) =
@@ -131,7 +131,7 @@ class ForkableTree<BranchData, LeafData> private constructor(
     if (blocked) throw AlreayForkedException()
     this.marker = node
   }
-  
+
   override fun getRoot(): INode<BranchData, LeafData> = 
     if (blocked) throw AlreayForkedException() else root
 
