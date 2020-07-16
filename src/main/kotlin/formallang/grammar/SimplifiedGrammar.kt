@@ -2,6 +2,7 @@ package formallang.grammar
 
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.*
 
  /**
   * упрощённое правило состояит только из символов (то есть не включает выражения)
@@ -30,96 +31,169 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
         val rightRule = entry.value.fold("", { a, b -> "$a\n\t$b" })
         "$acc\n${entry.key} = $rightRule"
       })
-  public fun toGrammar(): Grammar = 
-    Grammar(rules.mapValues { entry -> 
-      Choise(entry.value.map { Sequence(it.symbols) }) 
+  public fun toGrammar(): Grammar =
+    Grammar(rules.mapValues { entry ->
+      Choise(entry.value.map { Sequence(it.symbols) })
     })
- 
-  private val epsilons: Set<NonTerminal> = HashSet()  
-  private val firstChars: Map<SimplifiedRule, FirstCharacter> = HashMap()
+
+  /*private*/ val epsilons: Set<NonTerminal> = HashSet()
+  /*private*/ val firstChars: Map<SimplifiedRule, FirstCharacter> = HashMap()
 
   init {
-    TODO("Find Epsilons")
-    TODO("Find first chars")
-    
+    // Epsilons:
+    val eps = epsilons as MutableSet
+    var changed = true
+    val leftRules = rules.toMutableMap()
+    while (changed) {
+      changed = false
+      val toRemove = mutableSetOf<NonTerminal>()
+      for (entry in leftRules.entries) {
+        val (nonTerminal, ruleList) = entry
+        if (eps.contains(nonTerminal)) continue
+        if (ruleList.any { it.symbols.isEmpty() } ||
+            ruleList.any { rule ->
+              rule.symbols.all { sym -> (sym is NonTerminal) && eps.contains(sym) }
+            }) {
+          changed = true
+          eps.add(nonTerminal)
+          toRemove.add(nonTerminal)
+        }
+      }
+      toRemove.forEach { leftRules.remove(it) }
+    }
+    // First characters
+    val firstsForRules = firstChars as MutableMap
+    val firstsForNonTerminals = HashMap<NonTerminal, FirstCharacter>(rules.size)
+    fun processNonTerminal(inProcess: MutableSet<NonTerminal>, nonTerminal: NonTerminal) {
+      if (inProcess.contains(nonTerminal)) throw LeftRecursionException(nonTerminal)
+      if (firstsForNonTerminals.containsKey(nonTerminal)) return
+      inProcess.add(nonTerminal)
+      val ruleList = rules.get(nonTerminal) ?: throw NoRuleFoundException(nonTerminal)
+      var firstForNonTerminal: FirstCharacter = FirstCharWhiteList()
+      for (rule in ruleList) {
+        var first: FirstCharacter = FirstCharWhiteList()
+        for (symbol in rule.symbols) {
+          var finished = true
+          when (symbol) {
+            is Terminal -> first = first + symbol.getFirstChar()
+            is SpecialSymbol -> first = first + symbol.getFirstChar()
+            is EndOfFile -> {}
+            is NonTerminal -> {
+              if (!firstsForNonTerminals.containsKey(symbol))
+                processNonTerminal(inProcess, symbol)
+              first = first + firstsForNonTerminals.get(symbol)!!
+              finished = !(epsilons.contains(symbol)) // continue if can be epsilon
+            }
+          }
+          if (finished) break
+        }
+        firstsForRules.put(rule, first)
+        firstForNonTerminal = firstForNonTerminal + first
+      }
+      firstsForNonTerminals.put(nonTerminal, firstForNonTerminal)
+      inProcess.remove(nonTerminal)
+    }
+    val leftNonTerminals = rules.keys.toMutableSet()
+    while(!leftNonTerminals.isEmpty()){
+      processNonTerminal(hashSetOf(), leftNonTerminals.iterator().next())
+      leftNonTerminals.removeAll(firstsForNonTerminals.keys)
+    }
   }
 
-  public fun getPossibleRules(nonTerminal: NonTerminal, character: Char): List<SimplifiedRule>  = (
-    (rules.get(nonTerminal)?.filter{ 
-        firstChars.get(it)?.suitable(character) ?: false 
-      } ?: emptyList()) +  (if (epsilons.contains(nonTerminal)) listOf(SimplifiedRule()) else emptyList())
+  public fun getPossibleRules(nonTerminal: NonTerminal, character: Char): List<SimplifiedRule> = (
+    (rules.get(nonTerminal)?.filter {
+        firstChars.get(it)?.suitable(character) ?: false
+      } ?: emptyList()) + (if (epsilons.contains(nonTerminal)) listOf(SimplifiedRule()) else emptyList())
   )
 
   companion object {
-    /* получить список правил для указанного нетерминала */
-    private fun getOrCreateList(nonTerminal: NonTerminal, targetRules: RulesMap): ArrayList<SimplifiedRule> =
-        targetRules.get(nonTerminal) ?: {
-        val newList = ArrayList<SimplifiedRule>()
-        targetRules.put(nonTerminal, newList)
-        newList
-        }()
 
-    /* добавить правиол в указанную мапу */
-    private fun addRule(rule: SimplifiedRule, nonTerminal: NonTerminal, targetRules: RulesMap) =
-      getOrCreateList(nonTerminal, targetRules).add(rule)
+    private class SimplifiedGrammarBuilder(
+      val grammar: Grammar
+    ){
+      private val mutex = Mutex()
+      private val targetRules = ConcurrentHashMap<NonTerminal, ArrayList<SimplifiedRule>>()
 
-    /* обработать обычное правило, превратив его в набор упрощённых */
-    private fun processRule(nonTerminal: NonTerminal, rule: Expression, targetRules: RulesMap) {
-      when (rule) {
-        is Symbol -> addRule(SimplifiedRule(rule), nonTerminal, targetRules)
-        is Choise -> {
-          var i = 0
-          for (variant in rule.variants) {
-            if (variant is Repeat || variant is Maybe) {
-              val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
-              i += 1
-              processRule(newNonTerminal, variant, targetRules)
-              addRule(SimplifiedRule(newNonTerminal), nonTerminal, targetRules)
-            } else processRule(nonTerminal, variant, targetRules)
+      /* получить список правил для указанного нетерминала */
+      private suspend fun getOrCreateList(nonTerminal: NonTerminal):
+        ArrayList<SimplifiedRule> {
+          if (targetRules.containsKey(nonTerminal))
+            return targetRules.get(nonTerminal)!!
+          else {
+            lateinit var newList: ArrayList<SimplifiedRule>  
+            mutex.withLock() { 
+              newList = ArrayList<SimplifiedRule>()
+              targetRules.put(nonTerminal, newList)  
+            }
+            return newList
           }
         }
-        is Repeat -> {
-          processRule(nonTerminal, Sequence(rule.repeatable, nonTerminal), targetRules)
-          addRule(SimplifiedRule(), nonTerminal, targetRules)
-        }
-        is Maybe -> {
-          processRule(nonTerminal, rule.possible, targetRules)
-          addRule(SimplifiedRule(), nonTerminal, targetRules)
-        }
-        is Sequence -> {
-          val newSymbolsList: MutableList<Symbol> = ArrayList<Symbol>()
-          var i = 0
-          for (expr in rule.parts) {
-            if (expr is Symbol)
-            newSymbolsList.add(expr)
-            else {
-              val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
-              i += 1
-              processRule(newNonTerminal, expr, targetRules)
-              newSymbolsList.add(newNonTerminal)
+
+      /* добавить правило в мапу */
+      private suspend fun addRule(rule: SimplifiedRule, nonTerminal: NonTerminal) =
+        getOrCreateList(nonTerminal).add(rule)
+
+      /* обработать обычное правило, превратив его в набор упрощённых */
+      private suspend fun processRule(nonTerminal: NonTerminal, rule: Expression) {
+        when (rule) {
+          is Symbol -> addRule(SimplifiedRule(rule), nonTerminal)
+          is Choise -> {
+            var i = 0
+            for (variant in rule.variants) {
+              if (variant is Repeat || variant is Maybe) {
+                val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
+                i += 1
+                processRule(newNonTerminal, variant)
+                addRule(SimplifiedRule(newNonTerminal), nonTerminal)
+              } else processRule(nonTerminal, variant)
             }
           }
-          addRule(SimplifiedRule(newSymbolsList), nonTerminal, targetRules)
+          is Repeat -> {
+            processRule(nonTerminal, Sequence(rule.repeatable, nonTerminal))
+            addRule(SimplifiedRule(), nonTerminal)
+          }
+          is Maybe -> {
+            processRule(nonTerminal, rule.possible)
+            addRule(SimplifiedRule(), nonTerminal)
+          }
+          is Sequence -> {
+            val newSymbolsList: MutableList<Symbol> = ArrayList<Symbol>()
+            var i = 0
+            for (expr in rule.parts) {
+              if (expr is Symbol)
+              newSymbolsList.add(expr)
+              else {
+                val newNonTerminal = NonTerminal(nonTerminal.name + "_" + i)
+                i += 1
+                processRule(newNonTerminal, expr)
+                newSymbolsList.add(newNonTerminal)
+              }
+            }
+            addRule(SimplifiedRule(newSymbolsList), nonTerminal)
+          }
         }
+      }
+
+      public fun getGrammar(): SimplifiedGrammar {
+        val jobList = ArrayList<Job>()
+        for ((nonTerminal, rule) in grammar.rules) {
+          jobList.add(GlobalScope.launch {
+            processRule(nonTerminal, rule)
+          })
+        } 
+        jobList.forEach{ job ->
+          runBlocking{
+            job.join()
+          }
+        }
+        return SimplifiedGrammar(targetRules.toMap())
       }
     }
 
     /**
      * Построить упрощённую грамматику из расширенной
      */
-    public fun fromGrammar(grammar: Grammar): SimplifiedGrammar {
-      val targetRules = ConcurrentHashMap<NonTerminal, ArrayList<SimplifiedRule>>()
-      val jobList = ArrayList<Job>()
-      for ((nonTerminal, rule) in grammar.rules) {
-        jobList.add(GlobalScope.launch {
-          processRule(nonTerminal, rule, targetRules)
-        })
-      }
-      runBlocking {
-        for (job in jobList)
-          job.join()
-      }
-      return SimplifiedGrammar(targetRules)
-    }
+    public fun fromGrammar(grammar: Grammar): SimplifiedGrammar =
+      SimplifiedGrammarBuilder(grammar).getGrammar()
   }
 }
