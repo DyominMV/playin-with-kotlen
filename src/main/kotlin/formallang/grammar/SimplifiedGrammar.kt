@@ -23,11 +23,32 @@ typealias RulesMap = MutableMap<NonTerminal, ArrayList<SimplifiedRule>>
  * поскольку в упрощённой грамматике нет выражений, все правила сгруппированы по левой части в списки
  */
 data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) {
-  constructor(vararg theRules: Pair<NonTerminal, List<SimplifiedRule>>) : this(theRules.associateBy({ it.first }, { it.second }))
-  override fun toString(): String = rules.entries.fold("", { acc, entry -> "" + acc + "\n" + entry.key + " = " + entry.value.fold("", { a, b -> a + "\n\t" + b }) })
-  public fun toGrammar(): Grammar = Grammar(rules.mapValues { entry -> Choise(entry.value.map { Sequence(it.symbols) }) })
-  /* узнаём есть ли эпсилон-правило ля данного нетерминала */
-  public fun isEpsilon(nonTerminal: NonTerminal): Boolean = rules.get(nonTerminal)?.any { it.isEpsilon() } ?: false
+  constructor(vararg theRules: Pair<NonTerminal, List<SimplifiedRule>>) :
+    this(theRules.associateBy({ it.first }, { it.second }))
+  override fun toString(): String =
+    rules.entries.fold("", { acc, entry ->
+        val rightRule = entry.value.fold("", { a, b -> "$a\n\t$b" })
+        "$acc\n${entry.key} = $rightRule"
+      })
+  public fun toGrammar(): Grammar = 
+    Grammar(rules.mapValues { entry -> 
+      Choise(entry.value.map { Sequence(it.symbols) }) 
+    })
+ 
+  private val epsilons: Set<NonTerminal> = HashSet()  
+  private val firstChars: Map<SimplifiedRule, FirstCharacter> = HashMap()
+
+  init {
+    TODO("Find Epsilons")
+    TODO("Find first chars")
+    
+  }
+
+  public fun getPossibleRules(nonTerminal: NonTerminal, character: Char): List<SimplifiedRule>  = (
+    (rules.get(nonTerminal)?.filter{ 
+        firstChars.get(it)?.suitable(character) ?: false 
+      } ?: emptyList()) +  (if (epsilons.contains(nonTerminal)) listOf(SimplifiedRule()) else emptyList())
+  )
 
   companion object {
     /* получить список правил для указанного нетерминала */
@@ -94,7 +115,7 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
           processRule(nonTerminal, rule, targetRules)
         })
       }
-      runBlocking{
+      runBlocking {
         for (job in jobList)
           job.join()
       }
