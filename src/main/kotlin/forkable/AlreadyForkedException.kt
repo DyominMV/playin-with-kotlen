@@ -1,4 +1,4 @@
 package forkable
 
-class AlreayForkedException: 
+class AlreadyForkedException: 
   Exception("Cannot call forkable object's methods after it was forked")

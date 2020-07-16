@@ -1,6 +1,5 @@
 package forkable
 
-import java.io.InputStreamReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 
@@ -8,7 +7,7 @@ interface IForkableStream<T> : IForkable<IForkableStream<T>> {
   public suspend fun next(): T? // null is for EOF
 }
 
-open class SharedNode<T>(
+private open class SharedNode<T>(
   val value: T,
   nextProducer: () -> T
 ) {
@@ -27,7 +26,7 @@ open class SharedNode<T>(
   }
 }
 
-class SharedArrayNode<T>(
+private class SharedArrayNode<T>(
   value: ArrayList<T?>,
   val producer: () -> T?
 ) : SharedNode<ArrayList<T?>>(
@@ -43,12 +42,14 @@ class SharedArrayNode<T>(
   }
 }
 
-class ForkableStream<T>(
-  var node: SharedNode<ArrayList<T?>>,
+class ForkableStream<T> private constructor(
+  node: SharedNode<ArrayList<T?>>,
   var elementIndex: Int
 ) : IForkableStream<T> {
 
-  constructor(producer: ()->T?) : this(
+  private var node: SharedNode<ArrayList<T?>> = node
+  
+  constructor(producer: () -> T?) : this(
     SharedArrayNode<T>(arrayListOf(), producer),
     -1
   ) {
@@ -60,7 +61,7 @@ class ForkableStream<T>(
   private var blocked: Boolean = false
 
   override suspend fun next(): T? {
-    if (blocked) throw AlreayForkedException()
+    if (blocked) throw AlreadyForkedException()
     if (elementIndex >= node.value.size) {
       elementIndex = -1
       node = node.getNextNode()
@@ -70,9 +71,9 @@ class ForkableStream<T>(
   }
 
   override suspend fun fork(count: Int): Iterable<ForkableStream<T>> {
-    if (blocked) throw AlreayForkedException()
+    if (blocked) throw AlreadyForkedException()
     val list = ArrayList<ForkableStream<T>>(count)
-    repeat(count){
+    repeat(count) {
       list.add(ForkableStream<T>(node, elementIndex))
     }
     blocked = true
