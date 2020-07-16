@@ -4,7 +4,7 @@ import formallang.grammar.*
 
 sealed class Node
 
-class Fork(
+class Branch(
   val nonTerminal: NonTerminal,
   val rule: SimplifiedRule,
   val children: List<Node>
@@ -12,7 +12,7 @@ class Fork(
   public fun getString():String = children.fold("", {
     acc, nextNode -> acc + when (nextNode){
         is Leaf -> nextNode.getStringValue()
-        is Fork -> nextNode.getString()
+        is Branch -> nextNode.getString()
       }
   })
 }
