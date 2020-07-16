@@ -7,32 +7,32 @@ interface IForkableStream<T> : IForkable<IForkableStream<T>> {
   public suspend fun next(): T? // null is for EOF
 }
 
-private open class SharedNode<T>(
+private open class StreamNode<T>(
   val value: T,
   nextProducer: () -> T
 ) {
   private val nextProducer: () -> T = nextProducer
-  private var next: SharedNode<T>? = null
+  private var next: StreamNode<T>? = null
   private val nextMutex: Mutex = Mutex()
 
-  public suspend fun getNextNode(): SharedNode<T> {
+  public suspend fun getNextNode(): StreamNode<T> {
     if (null == next) {
       nextMutex.withLock() {
         if (null == next)
-          next = SharedNode<T>(nextProducer.invoke(), nextProducer)
+          next = StreamNode<T>(nextProducer.invoke(), nextProducer)
       }
     }
     return next!!
   }
 }
 
-private class SharedArrayNode<T>(
+private class ArrayStreamNode<T>(
   value: ArrayList<T?>,
   val producer: () -> T?
-) : SharedNode<ArrayList<T?>>(
+) : StreamNode<ArrayList<T?>>(
   value, {
-      val list = ArrayList<T?>(SharedArrayNode.ARRAY_SIZE)
-      for (i in 1..SharedArrayNode.ARRAY_SIZE)
+      val list = ArrayList<T?>(ArrayStreamNode.ARRAY_SIZE)
+      for (i in 1..ArrayStreamNode.ARRAY_SIZE)
         list.add(producer())
       list
     }
@@ -43,14 +43,14 @@ private class SharedArrayNode<T>(
 }
 
 class ForkableStream<T> private constructor(
-  node: SharedNode<ArrayList<T?>>,
+  node: StreamNode<ArrayList<T?>>,
   var elementIndex: Int
 ) : IForkableStream<T> {
 
-  private var node: SharedNode<ArrayList<T?>> = node
+  private var node: StreamNode<ArrayList<T?>> = node
   
   constructor(producer: () -> T?) : this(
-    SharedArrayNode<T>(arrayListOf(), producer),
+    ArrayStreamNode<T>(arrayListOf(), producer),
     -1
   ) {
     runBlocking {
