@@ -9,7 +9,7 @@ class StringifyNonTerminals(nonTerminals: Set<NonTerminal>) :
     {
       when (it) {
         is Leaf -> listOf(it)
-        is Fork -> listOf(CompoundLeaf(it.nonTerminal, it.getString()))
+        is Branch -> listOf(CompoundLeaf(it.nonTerminal, it.getString()))
       }
     },
     ProcessingDirection.ROOT_FIRST
@@ -25,7 +25,7 @@ class UnfoldNonTerminals(nonTerminals: Set<NonTerminal>) :
     {
       when (it) {
         is Leaf -> listOf(it)
-        is Fork -> it.children
+        is Branch -> it.children
       }
     },
     ProcessingDirection.ROOT_LAST

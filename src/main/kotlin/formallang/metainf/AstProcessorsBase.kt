@@ -18,10 +18,10 @@ open class TaggedSet(
 
   private final fun processNodeRL(node: Node): List<Node> {
     var newNode = node 
-    if (node is Fork){
+    if (node is Branch){
       val newChildren = ArrayList<Node>()
       for (child in node.children) newChildren.addAll(processNodeRL(child))
-      newNode = Fork(node.nonTerminal, node.rule, newChildren)
+      newNode = Branch(node.nonTerminal, node.rule, newChildren)
     }
     return if (isTagged(newNode)) nodeProcessor(newNode) else listOf(newNode)
   }
@@ -30,10 +30,10 @@ open class TaggedSet(
     if (isTagged(node))
       return nodeProcessor(node)
       var newNode = node
-      if (node is Fork){
+      if (node is Branch){
         val newChildren = ArrayList<Node>() 
         for (child in node.children) newChildren.addAll(processNodeRF(child))
-        newNode = Fork(node.nonTerminal, node.rule, newChildren)
+        newNode = Branch(node.nonTerminal, node.rule, newChildren)
       }
     return listOf(newNode)
   }
@@ -50,7 +50,7 @@ open class TaggedNonTerminalSet(
   nodeProcessor: (Node) -> List<Node>,
   direction: ProcessingDirection
 ) : TaggedSet(
-  { (it is Fork) && nonTerminals.contains(it.nonTerminal) },
+  { (it is Branch) && nonTerminals.contains(it.nonTerminal) },
   nodeProcessor,
   direction
 )
@@ -60,7 +60,7 @@ open class TaggedRuleSet(
   nodeProcessor: (Node) -> List<Node>,
   direction: ProcessingDirection
 ) : TaggedSet(
-  { (it is Fork) && rules.contains(it.rule) },
+  { (it is Branch) && rules.contains(it.rule) },
   nodeProcessor,
   direction
 )
