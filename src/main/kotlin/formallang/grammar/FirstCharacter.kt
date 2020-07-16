@@ -17,7 +17,7 @@ class FirstCharBlackList(
   val charList: Set<Char?> = hashSetOf(), 
   val filter: CharFilter = {false}
 ): FirstCharacter(){
-  override public fun suitable(char: Char?): Boolean = filter(char) || charList.contains(char)
+  override public fun suitable(char: Char?): Boolean = !(filter(char) || charList.contains(char))
   override operator fun plus(other: FirstCharacter): FirstCharacter 
     = when (other){
       is FirstCharBlackList -> FirstCharBlackList(
@@ -37,7 +37,7 @@ class FirstCharWhiteList(
   val charList: Set<Char?> = hashSetOf(), 
   val filter: CharFilter = {false}
 ): FirstCharacter(){
-  override public fun suitable(char: Char?): Boolean = !(filter(char) || charList.contains(char))
+  override public fun suitable(char: Char?): Boolean = filter(char) || charList.contains(char)
   override operator fun plus(other: FirstCharacter): FirstCharacter 
     = when (other){
       is FirstCharBlackList -> other + FirstCharBlackList(charList, filter)
