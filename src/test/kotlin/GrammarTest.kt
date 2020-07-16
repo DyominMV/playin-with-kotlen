@@ -1,6 +1,6 @@
 import org.junit.Test
 import org.junit.Assert.*
-import grammar.*
+import formallang.grammar.*
 
 class GrammarTest{
   @Test

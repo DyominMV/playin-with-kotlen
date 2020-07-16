@@ -11,38 +11,38 @@ class Fork(
 ) : Node(){
   public fun getString():String = children.fold("", {
     acc, nextNode -> acc + when (nextNode){
-        is Leaf -> nextNode.getValue()
+        is Leaf -> nextNode.getStringValue()
         is Fork -> nextNode.getString()
       }
   })
 }
 
 sealed class Leaf : Node(){
-  public abstract fun getValue(): String
+  public abstract fun getStringValue(): String
 }
 
 class TerminalLeaf(
   val terminal: Terminal
 ) : Leaf(){
-  override public fun getValue() = terminal.value 
+  override public fun getStringValue() = terminal.value 
 }
 
 class SpecialLeaf(
   val specialSymbol: SpecialSymbol,
   val value: String
 ) : Leaf(){
-  override public fun getValue() = value
+  override public fun getStringValue() = value
 }
 
 object EndOfFileLeaf : Leaf(){
-  override public fun getValue() = ""
+  override public fun getStringValue() = ""
 }
 
 class CompoundLeaf(
   val nonTerminal: NonTerminal, 
   val value: String
 ) : Leaf(){
-  override public fun getValue() = value
+  override public fun getStringValue() = value
 }
 
 class Ast(val root: Node)
