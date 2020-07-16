@@ -1,4 +1,4 @@
-package util
+package forkable
 
 import java.io.InputStreamReader
 import kotlinx.coroutines.*
@@ -57,7 +57,10 @@ class ForkableStream<T>(
     }
   }
 
+  private var blocked: Boolean = false
+
   override suspend fun next(): T? {
+    if (blocked) throw AlreayForkedException()
     if (elementIndex >= node.value.size) {
       elementIndex = -1
       node = node.getNextNode()
@@ -66,14 +69,13 @@ class ForkableStream<T>(
     return node.value[elementIndex]
   }
 
-  /**
-   * Первый элемент всегда this
-   */
   override suspend fun fork(count: Int): Iterable<ForkableStream<T>> {
-    val list = arrayListOf(this)
-    repeat(count-1){
+    if (blocked) throw AlreayForkedException()
+    val list = ArrayList<ForkableStream<T>>(count)
+    repeat(count){
       list.add(ForkableStream<T>(node, elementIndex))
     }
+    blocked = true
     return list
   }
 }
