@@ -7,6 +7,10 @@ interface State{
   public fun getType(): StateType
 }
 
-abstract class StateMachiene<T: State> (val transition: (T) -> Iterable<T>) {
-  abstract public fun runMachiene(startState: T): T? 
+interface StateMachiene<T: State> {
+  public fun runMachiene(startState: T): T? 
+}
+
+interface StateMachieneFactory<T:State>{
+  public fun getMachiene(transition: (T) -> Iterable<T>) : StateMachiene<T>
 }
