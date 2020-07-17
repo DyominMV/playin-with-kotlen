@@ -98,6 +98,6 @@ data class Maybe(val possible: Expression) : Expression() {
  * Это позволяет хранить правила в мапе
  */
 data class Grammar(val rules: Map<NonTerminal, Expression>) {
-  constructor(vararg pairs: Pair<NonTerminal, Expression>) : this(pairs.associateBy({ it.first }, { it.second }))
+  constructor(vararg pairs: Pair<NonTerminal, Expression>) : this(hashMapOf(*pairs))
   override fun toString(): String = rules.entries.fold("", { acc, entry -> acc + entry.key + " = " + entry.value + "\n" })
 }
