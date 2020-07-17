@@ -46,9 +46,9 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
     val leftRules = rules.toMutableMap()
     while (changed) {
       changed = false
-      val toRemove = mutableSetOf<NonTerminal>()
-      for (entry in leftRules.entries) {
-        val (nonTerminal, ruleList) = entry
+      val entryIterator = leftRules.entries.iterator()
+      while(entryIterator.hasNext()) {
+        val (nonTerminal, ruleList) = entryIterator.next()
         if (eps.contains(nonTerminal)) continue
         if (ruleList.any { it.symbols.isEmpty() } ||
             ruleList.any { rule ->
@@ -56,10 +56,9 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
             }) {
           changed = true
           eps.add(nonTerminal)
-          toRemove.add(nonTerminal)
+          entryIterator.remove()
         }
       }
-      toRemove.forEach { leftRules.remove(it) }
     }
     // First characters
     val firstsForRules = firstChars as MutableMap
@@ -95,12 +94,12 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
     }
     val leftNonTerminals = rules.keys.toMutableSet()
     while(!leftNonTerminals.isEmpty()){
-      processNonTerminal(hashSetOf(), leftNonTerminals.iterator().next())
+      processNonTerminal(hashSetOf(), leftNonTerminals.first())
       leftNonTerminals.removeAll(firstsForNonTerminals.keys)
     }
   }
 
-  public fun getPossibleRules(nonTerminal: NonTerminal, character: Char): List<SimplifiedRule> = (
+  public fun getPossibleRules(nonTerminal: NonTerminal, character: Char?): List<SimplifiedRule> = (
     (rules.get(nonTerminal)?.filter {
         firstChars.get(it)?.suitable(character) ?: false
       } ?: emptyList()) + (if (epsilons.contains(nonTerminal)) listOf(SimplifiedRule()) else emptyList())
