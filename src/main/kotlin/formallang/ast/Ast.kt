@@ -29,9 +29,9 @@ class TerminalLeaf(
 
 class SpecialLeaf(
   val specialSymbol: SpecialSymbol,
-  val value: String
+  val value: Char
 ) : Leaf(){
-  override public fun getStringValue() = value
+  override public fun getStringValue() = value.toString()
 }
 
 object EndOfFileLeaf : Leaf(){
