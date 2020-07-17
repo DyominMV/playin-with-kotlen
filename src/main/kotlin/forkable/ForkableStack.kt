@@ -34,7 +34,7 @@ class ForkableStack<T> private constructor(
 
   private var blocked = false
 
-  override suspend fun fork(count: Int): Iterable<IForkableStack<T>> {
+  override fun fork(count: Int): Iterable<IForkableStack<T>> {
     val list = ArrayList<IForkableStack<T>>(count)
     repeat(count){
       list.add(ForkableStack(currentNode))

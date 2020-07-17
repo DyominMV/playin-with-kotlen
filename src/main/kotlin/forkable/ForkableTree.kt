@@ -55,7 +55,7 @@ private class RealBranch<BranchData, LeafData>(
       RealBranch.MAP_CAPACITY
     )
   )
-  
+
   private var data: BranchData = data
   fun getData(): BranchData = data
   fun setData(data: BranchData) { this.data = data }
@@ -84,6 +84,15 @@ private class RealBranch<BranchData, LeafData>(
       RealBranch(this, data)
     )
   }
+
+  fun getParent(caller: ForkableTree<BranchData, LeafData>):
+      ITreeNode<BranchData, LeafData>? {
+    val parent = getParent()
+    if (parent is RealBranch)
+      return Branch(parent, caller)
+    else
+      return parent
+  }
 }
 
 private class Branch<BranchData, LeafData> (
@@ -101,7 +110,7 @@ private class Branch<BranchData, LeafData> (
   override fun setData(data: BranchData) =
     realBranch.setData(data)
   override fun getParent(): ITreeNode<BranchData, LeafData>? =
-    realBranch.getParent()
+    realBranch.getParent(caller)
 }
 
 class ForkableTree<BranchData, LeafData> private constructor(
@@ -145,7 +154,7 @@ class ForkableTree<BranchData, LeafData> private constructor(
   override fun getRoot(): ITreeNode<BranchData, LeafData> =
     if (blocked) throw AlreadyForkedException() else root
 
-  override suspend fun fork(count: Int): Iterable<ForkableTree<BranchData, LeafData>> {
+  override fun fork(count: Int): Iterable<ForkableTree<BranchData, LeafData>> {
     if (blocked) throw AlreadyForkedException()
     val list = ArrayList<ForkableTree<BranchData, LeafData>>(count)
     repeat(count) {

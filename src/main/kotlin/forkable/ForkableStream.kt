@@ -4,7 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 
 interface IForkableStream<T> : IForkable<IForkableStream<T>> {
-  public suspend fun next(): T? // null is for EOF
+  public fun next(): T? // null is for EOF
 }
 
 private open class StreamNode<T>(
@@ -15,12 +15,12 @@ private open class StreamNode<T>(
   private var next: StreamNode<T>? = null
   private val nextMutex: Mutex = Mutex()
 
-  public suspend fun getNextNode(): StreamNode<T> {
+  public fun getNextNode(): StreamNode<T> {
     if (null == next) {
-      nextMutex.withLock() {
+      runBlocking { nextMutex.withLock() {
         if (null == next)
           next = StreamNode<T>(nextProducer.invoke(), nextProducer)
-      }
+      } }
     }
     return next!!
   }
@@ -48,7 +48,7 @@ class ForkableStream<T> private constructor(
 ) : IForkableStream<T> {
 
   private var node: StreamNode<ArrayList<T?>> = node
-  
+
   constructor(producer: () -> T?) : this(
     ArrayStreamNode<T>(arrayListOf(), producer),
     -1
@@ -60,7 +60,7 @@ class ForkableStream<T> private constructor(
 
   private var blocked: Boolean = false
 
-  override suspend fun next(): T? {
+  override fun next(): T? {
     if (blocked) throw AlreadyForkedException()
     if (elementIndex >= node.value.size) {
       elementIndex = -1
@@ -70,7 +70,7 @@ class ForkableStream<T> private constructor(
     return node.value[elementIndex]
   }
 
-  override suspend fun fork(count: Int): Iterable<ForkableStream<T>> {
+  override fun fork(count: Int): Iterable<ForkableStream<T>> {
     if (blocked) throw AlreadyForkedException()
     val list = ArrayList<ForkableStream<T>>(count)
     repeat(count) {
