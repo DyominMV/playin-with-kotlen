@@ -1,6 +1,7 @@
 package formallang.ast
 
 import formallang.grammar.*
+import kotlin.text.*
 
 sealed class Node
 
@@ -49,4 +50,19 @@ class CompoundLeaf(
   override public fun getStringValue() = value
 }
 
-class Ast(val root: Node)
+class Ast(val root: Node){
+
+  private fun decoration(offset: Int): String =
+    if (offset < 0) throw IllegalArgumentException("offset must be positive") else 
+      "|".repeat(offset)
+
+  private fun toString(node: Node, offset: Int): String =
+    when (node){
+      is Leaf -> decoration(offset) + "'${node.getStringValue()}'\n"
+      is Branch -> decoration(offset) + "${node.nonTerminal.name}\n" +
+        node.children.map({toString(it, offset+1)})
+          .fold("", String::plus)
+    }
+
+  override fun toString(): String = toString(root, 0) 
+}
