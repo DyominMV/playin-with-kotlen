@@ -132,7 +132,12 @@ class RegularState private constructor(
       .map({ BranchData(symbol, it) })
     if (branchList.isEmpty()) return listOf(FailedState())
     val count = branchList.size
-    val trees = parsingTree.fork(count).iterator()
+    val trees = (
+      if (1 == count)
+        listOf(parsingTree) 
+      else 
+        parsingTree.fork(count)
+    ).iterator()
     val streams = inputStream.fork(count).iterator()
     val branches = branchList.iterator()
     val states = ArrayList<ParsingState>()

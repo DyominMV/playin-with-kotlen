@@ -102,18 +102,19 @@ private class RealBranch<BranchData, LeafData>(
   data: BranchData
 ) : TreeNode<BranchData, LeafData>(parent) {
   companion object {
-    private val MAP_CAPACITY = 5
+    private val INITIAL_MAP_CAPACITY = 1
   }
 
   /**
    * Хранение детей в слабой хэшмапе обеспечивает возможность удаления экземпляров
-   * ForkableTree, которые работают с данным узлом
+   * ForkableTree, которые используют данный узел
    */
   private val children = Collections.synchronizedMap(
     WeakHashMap<ForkableTree<BranchData, LeafData>, MutableList<TreeNode<BranchData, LeafData>>>(
-      RealBranch.MAP_CAPACITY
+      RealBranch.INITIAL_MAP_CAPACITY
     )
-  )
+  ) 
+  // Наверное было бы лучше использовать тут мапу оптимизированную для малого числа вхождений
 
   private var data: BranchData = data
   fun getData(): BranchData = data
