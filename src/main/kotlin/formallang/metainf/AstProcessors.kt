@@ -34,3 +34,13 @@ class UnfoldNonTerminals(nonTerminals: Set<NonTerminal>) :
     (nonTerminals as MutableSet<NonTerminal>).addAll(nonTerminalList)
   }
 }
+
+object RemoveEmpties : TaggedSet(
+  { when (it) {
+      is Leaf -> it.getStringValue() == ""
+      is Branch -> it.children.size == 0
+    }
+  },
+  {emptyList()},
+  ProcessingDirection.ROOT_LAST
+)
