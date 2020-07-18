@@ -62,11 +62,11 @@ class ForkableStream<T> private constructor(
 
   override fun next(): T? {
     if (blocked) throw AlreadyForkedException()
+    elementIndex = elementIndex + 1
     if (elementIndex >= node.value.size) {
-      elementIndex = -1
+      elementIndex = 0
       node = node.getNextNode()
     }
-    elementIndex = elementIndex + 1
     return node.value[elementIndex]
   }
 
