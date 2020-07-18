@@ -21,7 +21,7 @@ private typealias ParsingTree = ForkableTree<BranchData, LeafData>
 private typealias CharacterStream = ForkableStream<Char>
 
 private fun ParsingTree.toAst(): Ast {
-  return Ast(toAstNode(this.getRoot()))
+  return Ast(toAstNode((this.getRoot() as IBranch).getChildren().first()))
 }
 
 private fun toAstNode(node: ITreeNode<BranchData, LeafData>): Node =
@@ -54,15 +54,15 @@ sealed class ParsingState() : State {
   public abstract fun transition(): Iterable<ParsingState>
 }
 
-private class RegularState constructor(
+class RegularState private constructor(
   val grammar: SimplifiedGrammar,
-  val parsingTree: ParsingTree,
+  private val parsingTree: ParsingTree,
   val inputStream: CharacterStream,
   val knownChar: Char?
 ) : ParsingState() {
   public override fun getType(): State.StateType = State.StateType.UNFINISHED
 
-  fun getTree(): Ast = parsingTree.toAst()
+  fun getAst(): Ast = parsingTree.toAst()
 
   private fun endOfFileTransition(marker: IBranch<BranchData, LeafData>):
       Iterable<ParsingState> {
@@ -108,14 +108,13 @@ private class RegularState constructor(
     val streams = inputStream.fork(count).iterator()
     val branches = branchList.iterator()
     val states = ArrayList<ParsingState>()
-    for (i in 1..count) {
+    repeat(count) {
       val newState =
         RegularState(grammar, trees.next(), streams.next(), knownChar)
-      states.add(newState)
       val newBranch = branches.next()
       val marker = newState.parsingTree.getMarker() as IBranch
       marker.addBranchChild(newBranch)
-      newState.parsingTree.setMarker(marker.getChildren().first())
+      newState.parsingTree.setMarker(marker.getChildren().last())
       states.add(newState)
     }
     return states
@@ -123,8 +122,9 @@ private class RegularState constructor(
 
   override fun transition(): Iterable<ParsingState> {
     val marker = parsingTree.getMarker()
-    if (!(marker is IBranch))
+    if (!(marker is IBranch)){
       throw IllegalStateException("We do not mark leaves")
+    }
     val nextSymbolIndex = marker.getChildren().size
     if (marker.getData().rule.symbols.size == nextSymbolIndex) {
       val parent = marker.getParent()
@@ -158,15 +158,15 @@ private class RegularState constructor(
   )
 }
 
-private class SuccessState(
+class SuccessState(
   val regularState: RegularState
 ) : ParsingState() {
   public override fun getType(): State.StateType = State.StateType.SUCCESS
   override fun transition(): Iterable<ParsingState> = listOf(this)
-  public fun getAst(): Ast = regularState.getTree()
+  public fun getAst(): Ast = regularState.getAst()
 }
 
-private class FailedState : ParsingState() {
+class FailedState : ParsingState() {
   public override fun getType(): State.StateType = State.StateType.FAIL
   override fun transition(): Iterable<ParsingState> = listOf(this)
 }
