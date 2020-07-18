@@ -3,6 +3,9 @@ package formallang.metainf
 import formallang.ast.*
 import formallang.grammar.*
 
+/**
+ * Преобразует ветки с указанными нетерминалами в formallang.grammar.CompoundLeaf
+ */
 class StringifyNonTerminals(nonTerminals: Set<NonTerminal>) :
   TaggedNonTerminalSet(
     nonTerminals,
@@ -19,6 +22,10 @@ class StringifyNonTerminals(nonTerminals: Set<NonTerminal>) :
   }
 }
 
+/**
+ * Преобразует ветки с указанными нетерминалами в наборы из детей и присоединяет их 
+ * к родителям этих веток 
+ */
 class UnfoldNonTerminals(nonTerminals: Set<NonTerminal>) :
   TaggedNonTerminalSet(
     nonTerminals,
@@ -35,8 +42,12 @@ class UnfoldNonTerminals(nonTerminals: Set<NonTerminal>) :
   }
 }
 
+/**
+ * Удаляет пустые листья и ветки
+ */
 object RemoveEmpties : TaggedSet(
-  { when (it) {
+  { 
+    when (it) {
       is Leaf -> it.getStringValue() == ""
       is Branch -> it.children.size == 0
     }

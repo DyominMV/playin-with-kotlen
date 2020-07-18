@@ -3,10 +3,19 @@ package forkable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 
-interface IForkableStream<T> : IForkable<IForkableStream<T>> {
-  public fun next(): T? // null is for EOF
+/**
+ * Поток, который может *разделиться*
+ */
+interface IForkableStream<T> : Forkable<IForkableStream<T>> {
+  /**
+   * Получить следующее значение из потока или null если поток кончился
+   */
+  public suspend fun next(): T?
 }
 
+/** 
+ * Узел очереди - буффера для элементов, которые ещё не прочитаны 
+ */
 private open class StreamNode<T>(
   val value: T,
   nextProducer: () -> T
@@ -15,25 +24,32 @@ private open class StreamNode<T>(
   private var next: StreamNode<T>? = null
   private val nextMutex: Mutex = Mutex()
 
-  public fun getNextNode(): StreamNode<T> {
+  /**
+   * Получить следующий узел очереди
+   */
+  public suspend fun getNextNode(): StreamNode<T> {
     if (null == next) {
-      runBlocking { nextMutex.withLock() {
+      nextMutex.withLock() {
         if (null == next)
           next = StreamNode<T>(nextProducer.invoke(), nextProducer)
-      } }
+      }
     }
     return next!!
   }
 }
 
+/**
+ * Узел очереди, хранящий массив элементов. Кажется это должно слегка экономить память
+ */
 private class ArrayStreamNode<T>(
   value: ArrayList<T?>,
   val producer: () -> T?
 ) : StreamNode<ArrayList<T?>>(
   value, {
       val list = ArrayList<T?>(ArrayStreamNode.ARRAY_SIZE)
-      for (i in 1..ArrayStreamNode.ARRAY_SIZE)
+      repeat (ArrayStreamNode.ARRAY_SIZE){
         list.add(producer())
+      }
       list
     }
 ) {
@@ -42,6 +58,9 @@ private class ArrayStreamNode<T>(
   }
 }
 
+/**
+ * Поток, который может *разделиться*
+ */
 class ForkableStream<T> private constructor(
   node: StreamNode<ArrayList<T?>>,
   var elementIndex: Int
@@ -51,7 +70,7 @@ class ForkableStream<T> private constructor(
 
   constructor(producer: () -> T?) : this(
     ArrayStreamNode<T>(arrayListOf(), producer),
-    -1
+    -1 // Потому что перед получением следующего элемента индекс увеличивается на 1
   ) {
     runBlocking {
       node = node.getNextNode()
@@ -60,7 +79,10 @@ class ForkableStream<T> private constructor(
 
   private var blocked: Boolean = false
 
-  override fun next(): T? {
+  /**
+   * Получить следующее значение из потока 
+   */
+  override suspend fun next(): T? {
     if (blocked) throw AlreadyForkedException()
     elementIndex = elementIndex + 1
     if (elementIndex >= node.value.size) {
@@ -70,6 +92,9 @@ class ForkableStream<T> private constructor(
     return node.value[elementIndex]
   }
 
+  /**
+   * *разделиться* @see forkable.Forkable#fork(Int)
+   */
   override fun fork(count: Int): Iterable<ForkableStream<T>> {
     if (blocked) throw AlreadyForkedException()
     val list = ArrayList<ForkableStream<T>>(count)

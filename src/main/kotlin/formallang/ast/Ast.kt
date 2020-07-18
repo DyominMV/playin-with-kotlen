@@ -3,8 +3,14 @@ package formallang.ast
 import formallang.grammar.*
 import kotlin.text.*
 
+/**
+ * Узел АСД. это как sealed interface, но таких не существует, поэтому вот
+ */
 sealed class Node
 
+/**
+ * Ветка AST. Знает по какому нетерминалу и правилу она получена
+ */
 class Branch(
   val nonTerminal: NonTerminal,
   val rule: SimplifiedRule,
@@ -18,16 +24,25 @@ class Branch(
   })
 }
 
+/**
+ * Обобщённый лист АСД.
+ */
 sealed class Leaf : Node(){
   public abstract fun getStringValue(): String
 }
 
+/**
+ * Лист полученный разбором терминала
+ */
 class TerminalLeaf(
   val terminal: Terminal
 ) : Leaf(){
   override public fun getStringValue() = terminal.value 
 }
 
+/**
+ * Лист полученный заданным правилом для символа
+ */
 class SpecialLeaf(
   val specialSymbol: SpecialSymbol,
   val value: Char
@@ -35,14 +50,24 @@ class SpecialLeaf(
   override public fun getStringValue() = value.toString()
 }
 
+/**
+ * Лист полученный в процессе разбора символа конца файла
+ */
 object EndOfFileLeaf : Leaf(){
   override public fun getStringValue() = ""
 }
 
+/**
+ * Пустой лист. Кажется, не используется но если кто-то будет делать парсер 
+ * получше, мб ему пригодится
+ */
 object EmptyLeaf : Leaf(){
   override public fun getStringValue() = ""
 }
 
+/**
+ * Лист составленный из детей ветки. Знает свой нетерминал и значение
+ */
 class CompoundLeaf(
   val nonTerminal: NonTerminal, 
   val value: String
@@ -50,6 +75,9 @@ class CompoundLeaf(
   override public fun getStringValue() = value
 }
 
+/**
+ * Абстрактное Синтаксическое Дерево. Знает свой корень
+ */
 class Ast(val root: Node){
 
   private fun decoration(offset: Int): String =

@@ -45,6 +45,9 @@ class FirstCharWhiteList(
     }
 }
 
+/**
+ * Небольшая функция для суммирования списков разных цветов
+ */
 private fun sum(white: FirstCharWhiteList, black: FirstCharBlackList): FirstCharacter{
   return FirstCharBlackList(
     (black.charList - white.charList).filter({ !white.filter(it) }).toSet(),
@@ -53,13 +56,13 @@ private fun sum(white: FirstCharWhiteList, black: FirstCharBlackList): FirstChar
 }
 
 /**
- * терминал знает свой первый символ, так почему бы его не отдать?
+ * Первый символ терминала
  */
 fun Terminal.getFirstChar(): FirstCharacter 
   = FirstCharWhiteList(charList = hashSetOf(this.value.get(0)))
 
 /**
- * А вот и раскрываеся терминальная природа спецсимвола. 
+ * правило для специаьного символа 
  */
 fun SpecialSymbol.getFirstChar(): FirstCharacter 
   = FirstCharWhiteList(filter = this.filter)

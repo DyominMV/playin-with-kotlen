@@ -6,20 +6,35 @@ import formallang.ast.*
 import formallang.grammar.*
 import kotlinx.coroutines.*
 
+/**
+ * Полезная нагрузка для листьев дерева, которое потом будем превращать в АСД
+ */
 private class LeafData(
   val symbol: Symbol,
   val value: String
 )
 
+/**
+ * Полезная нагрузка для веток дерева, которое потом будем превращать в АСД
+ */
 private class BranchData(
   val nonTerminal: NonTerminal,
   val rule: SimplifiedRule
 )
 
+/**
+ * Таколе дерево будем преобразовывать в АСД
+ */
 private typealias ParsingTree = ForkableTree<BranchData, LeafData>
 
+/**
+ * Такой поток используется как источник входных данных 
+ */
 private typealias CharacterStream = ForkableStream<Char>
 
+/**
+ * Преобразовать дерево разбора в АСД
+ */
 private fun ParsingTree.toAst(): Ast {
   return Ast(toAstNode((this.getRoot() as IBranch).getChildren().first()))
 }
@@ -50,18 +65,31 @@ private fun toAstNode(node: ITreeNode<BranchData, LeafData>): Node =
     else -> throw InvalidTreeException()
   }
 
+/**
+ * Состояние разбора. от него наследуются 3 состояния: неудачное, успешное и обычное
+ */
 sealed class ParsingState() : State {
-  public abstract fun transition(): Iterable<ParsingState>
+  public abstract suspend fun transition(): Iterable<ParsingState>
 }
 
+/**
+ * Обычное состояние разбора хранит информацию о дереве разбора, входном потоке и 
+ * символе, который получен из этого потока, но ещё не отправлен в узел дерева разбора
+ */
 class RegularState private constructor(
   val grammar: SimplifiedGrammar,
   private val parsingTree: ParsingTree,
   val inputStream: CharacterStream,
   val knownChar: Char?
 ) : ParsingState() {
+  /**
+   * То, что автомат находится в этом состоянии значит, что разбор ещё не завершён
+   */
   public override fun getType(): State.StateType = State.StateType.UNFINISHED
 
+  /**
+   *  Получить АСД, созданное на основе дерева разбора  
+   */
   fun getAst(): Ast = parsingTree.toAst()
 
   private fun endOfFileTransition(marker: IBranch<BranchData, LeafData>):
@@ -72,7 +100,7 @@ class RegularState private constructor(
     } else return arrayListOf(FailedState())
   }
 
-  private fun specialSymbolTransition(
+  private suspend fun specialSymbolTransition(
     symbol: SpecialSymbol,
     marker: IBranch<BranchData, LeafData>
   ): Iterable<ParsingState> {
@@ -83,7 +111,7 @@ class RegularState private constructor(
     } else return arrayListOf(FailedState())
   }
 
-  private fun terminalTransition(
+  private suspend fun terminalTransition(
     symbol: Terminal,
     marker: IBranch<BranchData, LeafData>
   ): Iterable<ParsingState> {
@@ -120,9 +148,9 @@ class RegularState private constructor(
     return states
   }
 
-  override fun transition(): Iterable<ParsingState> {
+  override suspend fun transition(): Iterable<ParsingState> {
     val marker = parsingTree.getMarker()
-    if (!(marker is IBranch)){
+    if (!(marker is IBranch)) {
       throw IllegalStateException("We do not mark leaves")
     }
     val nextSymbolIndex = marker.getChildren().size
@@ -158,15 +186,21 @@ class RegularState private constructor(
   )
 }
 
+/**
+ * Состояние когда разбор завершён удачно и можно получить созданное АСД
+ */
 class SuccessState(
   val regularState: RegularState
 ) : ParsingState() {
   public override fun getType(): State.StateType = State.StateType.SUCCESS
-  override fun transition(): Iterable<ParsingState> = listOf(this)
+  override suspend fun transition(): Iterable<ParsingState> = listOf(this)
   public fun getAst(): Ast = regularState.getAst()
 }
 
+/**
+ * Состояние когда разбор завершён неудачно
+ */
 class FailedState : ParsingState() {
   public override fun getType(): State.StateType = State.StateType.FAIL
-  override fun transition(): Iterable<ParsingState> = listOf(this)
+  override suspend fun transition(): Iterable<ParsingState> = listOf(this)
 }

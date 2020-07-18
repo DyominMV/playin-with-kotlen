@@ -7,6 +7,10 @@ import formallang.metainf.*
 import automata.*
 import java.io.Reader
 
+/**
+ * Класс для разбора текста по заданной грамматике.
+ * Всё что он делает - запускает автомат с состояниями ParsingState
+ */
 class Parser private constructor(
   stateMachieneFactory: StateMachieneFactory<ParsingState>,
   val grammar: SimplifiedGrammar,
@@ -16,7 +20,7 @@ class Parser private constructor(
   val stateMachiene : StateMachiene<ParsingState>
 
   init {
-    stateMachiene = stateMachieneFactory.getMachiene({ it.transition() })
+    stateMachiene = stateMachieneFactory.getMachieneSuspend({ it.transition() })
   }
 
   constructor(
@@ -63,6 +67,9 @@ class Parser private constructor(
     }
   }
 
+  /**
+   * Возвращает экземпляр Ast при удачном завершении разбора и null при неудачном
+   */
   public fun parse(reader: Reader): Ast? {
     val initialTree = justParse(reader) ?: return null
     return processors.fold(initialTree) {

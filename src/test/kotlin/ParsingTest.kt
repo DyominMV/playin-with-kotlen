@@ -37,7 +37,7 @@ class ParsingTest{
 
   @Test
   fun shouldNotThrowExceptions(){
-    val parser = Parser(RegularMachieneFactory<ParsingState>(),grammar, mainSymbol, 
+    val parser = Parser(RegularMachieneFactory<ParsingState>(), grammar, mainSymbol, 
       RemoveEmpties, 
       StringifyNonTerminals(number)
     )

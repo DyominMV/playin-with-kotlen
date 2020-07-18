@@ -15,9 +15,7 @@ data class SimplifiedRule(val symbols: List<Symbol>) {
   fun isEpsilon(): Boolean = symbols.size == 0
 }
 
-/**
- * экономим буквы
- */
+
 typealias RulesMap = MutableMap<NonTerminal, ArrayList<SimplifiedRule>>
 
 /**
@@ -36,11 +34,12 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
       Choise(entry.value.map { Sequence(it.symbols) })
     })
 
-  /*private*/ val epsilons: Set<NonTerminal> = HashSet()
-  /*private*/ val firstChars: Map<SimplifiedRule, FirstCharacter> = HashMap()
+  private val epsilons: Set<NonTerminal> = HashSet()
+  private val firstChars: Map<SimplifiedRule, FirstCharacter> = HashMap()
 
+  // Осторожно, простыня
   init {
-    // Epsilons:
+    // Находим все правила и нетерминалы которые могут быть пустыми
     val eps = epsilons as MutableSet
     var changed = true
     val leftRules = rules.toMutableMap()
@@ -60,9 +59,11 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
         }
       }
     }
-    // First characters
+    // Находим "первые символы" для всех правил и нетерминалов
     val firstsForRules = firstChars as MutableMap
     val firstsForNonTerminals = HashMap<NonTerminal, FirstCharacter>(rules.size)
+    // локальная функция выглядит ужасно, но зато можно рекурсивно её позвать 
+    // кстати, ей доступны локальные переменные
     fun processNonTerminal(inProcess: MutableSet<NonTerminal>, nonTerminal: NonTerminal) {
       if (inProcess.contains(nonTerminal)) throw LeftRecursionException(nonTerminal)
       if (firstsForNonTerminals.containsKey(nonTerminal)) return
@@ -99,6 +100,10 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
     }
   }
 
+  /**
+   * Получить список возможных правил по которым можно разбирать текст начинающийся с 
+   * указанного символа для указанного нетерминала
+   */
   public fun getPossibleRules(nonTerminal: NonTerminal, character: Char?): List<SimplifiedRule> = (
     (rules.get(nonTerminal)?.filter {
         firstChars.get(it)?.suitable(character) ?: false
@@ -173,6 +178,9 @@ data class SimplifiedGrammar(val rules: Map<NonTerminal, List<SimplifiedRule>>) 
         }
       }
 
+      /**
+       * Выполняет построение грамматики
+       */
       public fun getGrammar(): SimplifiedGrammar {
         val jobList = ArrayList<Job>()
         for ((nonTerminal, rule) in grammar.rules) {
