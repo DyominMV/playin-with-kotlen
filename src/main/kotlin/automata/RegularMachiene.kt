@@ -9,11 +9,8 @@ class RegularMachiene<T : State>(
   private var currentStates: List<T> = ArrayList<T>()
 
   private fun stepTransitions(): State.StateType {
-    currentStates = currentStates.map(transition).fold(ArrayList<T>(), {
-      acc, newList ->
-      acc.addAll(newList)
-      acc
-    }).filter({ it.getType() != State.StateType.FAIL })
+    currentStates = currentStates.flatMap(transition).filter({ 
+      it.getType() != State.StateType.FAIL })
     if (currentStates.size == 0)
       return State.StateType.FAIL
     var possibleState = currentStates.find { it.getType() == State.StateType.SUCCESS }
