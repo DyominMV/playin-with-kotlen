@@ -240,10 +240,7 @@ class ForkableTree<BranchData, LeafData> private constructor(
   }
 
   private var blocked: Boolean = false
-  /**
-   * Узнать, заблокировано ли дерево (вызывался ли метод fork)
-   */
-  public fun isBlocked(): Boolean = blocked
+  override fun isBlocked(): Boolean = blocked
 
   /**
    * Получить отмеченный узел

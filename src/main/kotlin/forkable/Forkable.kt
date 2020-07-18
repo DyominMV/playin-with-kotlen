@@ -15,4 +15,9 @@ interface Forkable<T>{
    * и вызовы его методов могут выбрасывать исключения
    */
   public fun fork(count: Int): Iterable<Forkable<T>>
+
+  /**
+   * Узнать, заблокировано ли дерево (вызывался ли метод fork)
+   */
+  public fun isBlocked(): Boolean
 }

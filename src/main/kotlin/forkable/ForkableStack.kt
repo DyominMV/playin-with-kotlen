@@ -14,12 +14,12 @@ interface IForkableStack<T> : Forkable<IForkableStack<T>> {
   public fun peek(): T? // null means that stack is empty
   /**
    * Получить и удалить верхний элемент стека
-   */ 
+   */
   public fun pull(): T? // null means that stack is empty
 }
 
 /**
- * Узел стека, причём, самый обычный. По факту *разделяющийся* стек не отличается от 
+ * Узел стека, причём, самый обычный. По факту *разделяющийся* стек не отличается от
  * обычного ссылочного вообще ничем, кроме возможности *разделяться*
  */
 private open class StackNode<T>(
@@ -35,7 +35,7 @@ class ForkableStack<T> private constructor(
 ) : IForkableStack<T> {
 
   private var currentNode: StackNode<T>? = currentNode
-  
+
   /**
    * Добавить элемент в стек
    */
@@ -47,7 +47,7 @@ class ForkableStack<T> private constructor(
   /**
    * Посмотреть элемент на верхушке стека
    */
-  override fun peek(): T? = if (blocked) throw AlreadyForkedException() 
+  override fun peek(): T? = if (blocked) throw AlreadyForkedException()
     else currentNode?.data
 
   /**
@@ -61,13 +61,13 @@ class ForkableStack<T> private constructor(
   }
 
   private var blocked = false
-
+  override fun isBlocked(): Boolean = blocked
   /**
    * *разделиться* @see forkable.Forkable#fork(Int)
    */
   override fun fork(count: Int): Iterable<IForkableStack<T>> {
     val list = ArrayList<IForkableStack<T>>(count)
-    repeat(count){
+    repeat(count) {
       list.add(ForkableStack(currentNode))
     }
     return list

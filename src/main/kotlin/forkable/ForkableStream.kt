@@ -13,8 +13,8 @@ interface IForkableStream<T> : Forkable<IForkableStream<T>> {
   public suspend fun next(): T?
 }
 
-/** 
- * Узел очереди - буффера для элементов, которые ещё не прочитаны 
+/**
+ * Узел очереди - буффера для элементов, которые ещё не прочитаны
  */
 private open class StreamNode<T>(
   val value: T,
@@ -47,7 +47,7 @@ private class ArrayStreamNode<T>(
 ) : StreamNode<ArrayList<T?>>(
   value, {
       val list = ArrayList<T?>(ArrayStreamNode.ARRAY_SIZE)
-      repeat (ArrayStreamNode.ARRAY_SIZE){
+      repeat(ArrayStreamNode.ARRAY_SIZE) {
         list.add(producer())
       }
       list
@@ -78,9 +78,10 @@ class ForkableStream<T> private constructor(
   }
 
   private var blocked: Boolean = false
+  override fun isBlocked(): Boolean = blocked
 
   /**
-   * Получить следующее значение из потока 
+   * Получить следующее значение из потока
    */
   override suspend fun next(): T? {
     if (blocked) throw AlreadyForkedException()

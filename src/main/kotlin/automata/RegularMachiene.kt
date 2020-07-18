@@ -57,18 +57,18 @@ class RegularMachiene<T : State>(
 }
 
 /**
- * Выдаёт экземпляры RegularMachiene<T>
+ * Выдаёт экземпляры [RegularMachiene<T>]
  */
 class RegularMachieneFactory<T : State> : StateMachieneFactory<T> {
   /**
-   * Получить экземпляр RegularMachiene с указанной функией для описания переходов
+   * Получить экземпляр [automata.RegularMachiene] с указанной функией для описания переходов
    * из состояния в состояние
    */
   public override fun getMachiene(transition: (T) -> Iterable<T>): StateMachiene<T> =
     RegularMachiene(transition)
     
   /**
-   * Получить экземпляр RegularMachiene с указанной функией для описания переходов
+   * Получить экземпляр [RegularMachiene] с указанной функией для описания переходов
    * из состояния в состояние
    */
   public override fun getMachieneSuspend(transition: suspend (T) -> Iterable<T>): StateMachiene<T> =
