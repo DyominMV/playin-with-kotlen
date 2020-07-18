@@ -118,6 +118,7 @@ class ForkableTree<BranchData, LeafData> private constructor(
 ) : IForkable<ForkableTree<BranchData, LeafData>>, ITree<BranchData, LeafData> {
 
   private lateinit var root: ITreeNode<BranchData, LeafData>
+  private lateinit var marker: ITreeNode<BranchData, LeafData>
 
   private constructor(
     inherited: Set<ForkableTree<BranchData, LeafData>>,
@@ -127,23 +128,26 @@ class ForkableTree<BranchData, LeafData> private constructor(
   }
 
   companion object {
+    private fun <NodeData, BranchData, LeafData> initTree(
+      data: NodeData, 
+      nodeConstructor: (ITreeNode<BranchData, LeafData>?, NodeData) -> 
+          ITreeNode<BranchData, LeafData>
+    ) : ForkableTree<BranchData, LeafData> {
+      val tree = ForkableTree(HashSet<ForkableTree<BranchData, LeafData>>())
+      tree.root = nodeConstructor(null, data)
+      tree.marker = tree.getRoot()
+      return tree
+    }
     public fun <BranchData, LeafData> leafTree(rootData: LeafData):
-        ForkableTree<BranchData, LeafData> {
-      val tree = ForkableTree(HashSet<ForkableTree<BranchData, LeafData>>())
-      tree.root = Leaf(null, rootData)
-      return tree
-    }
+        ForkableTree<BranchData, LeafData> = 
+      initTree<LeafData, BranchData, LeafData>(rootData, {parent ,data -> Leaf(parent,data)})
     public fun <BranchData, LeafData> branchTree(rootData: BranchData):
-        ForkableTree<BranchData, LeafData> {
-      val tree = ForkableTree(HashSet<ForkableTree<BranchData, LeafData>>())
-      tree.root = Branch(RealBranch(null, rootData), tree)
-      return tree
-    }
+        ForkableTree<BranchData, LeafData> = 
+      initTree<BranchData, BranchData, LeafData>(rootData, {parent ,data -> RealBranch(parent,data)})
   }
 
   private var blocked: Boolean = false
 
-  private var marker = root
   override fun getMarker() =
     if (blocked) throw AlreadyForkedException() else marker
   override fun setMarker(node: ITreeNode<BranchData, LeafData>) {
@@ -152,7 +156,9 @@ class ForkableTree<BranchData, LeafData> private constructor(
   }
 
   override fun getRoot(): ITreeNode<BranchData, LeafData> =
-    if (blocked) throw AlreadyForkedException() else root
+    if (blocked) throw AlreadyForkedException() else 
+      if (root is RealBranch) Branch(root as RealBranch, this) else 
+        root
 
   override fun fork(count: Int): Iterable<ForkableTree<BranchData, LeafData>> {
     if (blocked) throw AlreadyForkedException()
