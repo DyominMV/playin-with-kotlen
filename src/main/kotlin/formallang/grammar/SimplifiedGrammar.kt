@@ -4,9 +4,9 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 
- /**
-  * упрощённое правило состояит только из символов (то есть не включает выражения)
-  */
+/**
+ * упрощённое правило состояит только из символов (то есть не включает выражения)
+ */
 data class SimplifiedRule(val symbols: List<Symbol>) {
   override fun toString(): String =
     if (symbols.size> 0) symbols.fold("", { acc, e -> acc + e + " " }) else "_"
